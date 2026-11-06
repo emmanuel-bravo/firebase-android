@@ -8,9 +8,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
+import com.franlop.android_firebase.navigation.trackscreen
+import com.google.firebase.analytics.FirebaseAnalytics
 
 @Composable
-fun Home() {
+fun Home(analytics: FirebaseAnalytics) {
+
+    trackscreen(name = "Ingreso a HomeScreen", analytics = analytics)
+
+
     Column (
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
