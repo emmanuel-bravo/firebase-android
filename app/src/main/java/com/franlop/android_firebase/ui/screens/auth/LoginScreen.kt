@@ -2,6 +2,8 @@ package com.franlop.android_firebase.ui.screens.auth
 
 import android.content.Context
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +51,8 @@ import com.franlop.android_firebase.ui.theme.Purple40
 import com.franlop.android_firebase.utils.AnalyticsManager
 import com.franlop.android_firebase.utils.AuthManager
 import com.franlop.android_firebase.utils.AuthRes
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,6 +63,37 @@ fun LoginScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavC
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        when (val account = auth.handleSignInResult(GoogleSignIn.getSignedInAccountFromIntent(result.data))) {
+            is AuthRes.Success -> {
+                val credential = GoogleAuthProvider.getCredential(account.data.idToken, null)
+                scope.launch {
+                    when (val fireUser = auth.signInWithGoogleCredential(credential)) {
+                        is AuthRes.Success -> {
+                            analytics.logButtonClicked("Click: Iniciar sesión con Google")
+                            Toast.makeText(context, "Bienvenidx", Toast.LENGTH_SHORT).show()
+                            navigation.navigate(Routes.Home.route) {
+                                popUpTo(Routes.Login.route) {
+                                    inclusive = true
+                                }
+                            }
+                        }
+                        is AuthRes.Error -> {
+                            analytics.logError("Error SignIn Google Credential: ${fireUser.errorMessage}")
+                            Toast.makeText(context, "Error: ${fireUser.errorMessage}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            is AuthRes.Error -> {
+                analytics.logError("Error SignIn Google: ${account.errorMessage}")
+                Toast.makeText(context, "Error: ${account.errorMessage}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         ClickableText(
@@ -166,7 +201,7 @@ fun LoginScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavC
         Spacer(modifier = Modifier.height(15.dp))
         SocialMediaButton(
             onClick = {
-                Toast.makeText(context, "Próximamente disponible", Toast.LENGTH_SHORT).show()
+                auth.signInWithGoogle(googleSignInLauncher)
             },
             text = "Continuar con Google",
             icon = R.drawable.ic_google,

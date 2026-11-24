@@ -11,7 +11,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.franlop.android_firebase"
+        applicationId = "com.emmanuel.android_firebase"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -57,6 +57,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.android.gms:play-services-auth:21.6.0")
 
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
