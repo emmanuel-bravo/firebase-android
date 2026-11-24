@@ -140,9 +140,7 @@ fun LoginScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavC
         ClickableText(
             text = AnnotatedString("¿Olvidaste tu contraseña?"),
             onClick = {
-                navigation.navigate(Routes.ForgotPassword.route) {
-                    popUpTo(Routes.Login.route) { inclusive = true }
-                }
+                navigation.navigate(Routes.ForgotPassword.route)
                 analytics.logButtonClicked("Click: ¿Olvidaste tu contraseña?")
             },
             style = TextStyle(
