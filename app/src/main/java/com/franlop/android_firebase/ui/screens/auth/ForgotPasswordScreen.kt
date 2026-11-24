@@ -1,5 +1,6 @@
 package com.franlop.android_firebase.ui.screens.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,9 +31,12 @@ import androidx.navigation.NavController
 import com.franlop.android_firebase.ui.navigation.Routes
 import com.franlop.android_firebase.ui.theme.Purple40
 import com.franlop.android_firebase.utils.AnalyticsManager
+import com.franlop.android_firebase.utils.AuthManager
+import com.franlop.android_firebase.utils.AuthRes
+import kotlinx.coroutines.launch
 
 @Composable
-fun ForgotPasswordScreen(analytics: AnalyticsManager, navigation: NavController) {
+fun ForgotPasswordScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavController) {
     analytics.logScreenView(screenName = Routes.ForgotPassword.route)
 
     val context = LocalContext.current
@@ -60,7 +64,23 @@ fun ForgotPasswordScreen(analytics: AnalyticsManager, navigation: NavController)
         Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
             Button(
                 onClick = {
-
+                    scope.launch {
+                        if (email.isNotBlank()) {
+                            when (val result = auth.sendPasswordResetEmail(email)) {
+                                is AuthRes.Success -> {
+                                    analytics.logButtonClicked("Click: Recuperar contraseña")
+                                    Toast.makeText(context, "Correo de recuperación enviado", Toast.LENGTH_SHORT).show()
+                                    navigation.popBackStack()
+                                }
+                                is AuthRes.Error -> {
+                                    analytics.logError("Error ForgotPassword: ${result.errorMessage}")
+                                    Toast.makeText(context, result.errorMessage, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Por favor ingresa tu correo electrónico", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier

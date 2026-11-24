@@ -1,8 +1,9 @@
 package com.franlop.android_firebase.ui.screens.auth
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -44,17 +47,18 @@ import com.franlop.android_firebase.R
 import com.franlop.android_firebase.ui.navigation.Routes
 import com.franlop.android_firebase.ui.theme.Purple40
 import com.franlop.android_firebase.utils.AnalyticsManager
+import com.franlop.android_firebase.utils.AuthManager
+import com.franlop.android_firebase.utils.AuthRes
+import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(analytics: AnalyticsManager, navigation: NavController) {
+fun LoginScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavController) {
     analytics.logScreenView(screenName = Routes.Login.route)
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-
-
-
-
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Box(modifier = Modifier.fillMaxSize()) {
         ClickableText(
@@ -105,7 +109,24 @@ fun LoginScreen(analytics: AnalyticsManager, navigation: NavController) {
         Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
             Button(
                 onClick = {
-
+                    scope.launch {
+                        if (email.isNotBlank() && password.isNotBlank()) {
+                            when (val result = auth.signInWithEmailAndPassword(email, password)) {
+                                is AuthRes.Success -> {
+                                    analytics.logButtonClicked("Click: Iniciar Sesión")
+                                    navigation.navigate(Routes.Home.route) {
+                                        popUpTo(Routes.Login.route) { inclusive = true }
+                                    }
+                                }
+                                is AuthRes.Error -> {
+                                    analytics.logError("Error Login: ${result.errorMessage}")
+                                    Toast.makeText(context, result.errorMessage, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            Toast.makeText(context, "Por favor completa todos los campos", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 },
                 shape = RoundedCornerShape(50.dp),
                 modifier = Modifier
@@ -136,7 +157,9 @@ fun LoginScreen(analytics: AnalyticsManager, navigation: NavController) {
         Spacer(modifier = Modifier.height(25.dp))
         SocialMediaButton(
             onClick = {
-
+                scope.launch {
+                    incognitoSignIn(auth, analytics, context, navigation)
+                }
             },
             text = "Continuar como invitado",
             icon = R.drawable.ic_incognito,
@@ -145,7 +168,7 @@ fun LoginScreen(analytics: AnalyticsManager, navigation: NavController) {
         Spacer(modifier = Modifier.height(15.dp))
         SocialMediaButton(
             onClick = {
-
+                Toast.makeText(context, "Próximamente disponible", Toast.LENGTH_SHORT).show()
             },
             text = "Continuar con Google",
             icon = R.drawable.ic_google,
@@ -154,14 +177,33 @@ fun LoginScreen(analytics: AnalyticsManager, navigation: NavController) {
     }
 }
 
-
+private suspend fun incognitoSignIn(
+    auth: AuthManager,
+    analytics: AnalyticsManager,
+    context: Context,
+    navigation: NavController
+) {
+    when (val result = auth.signInAnonymously()) {
+        is AuthRes.Success -> {
+            analytics.logButtonClicked("Click: Continuar como invitado")
+            navigation.navigate(Routes.Home.route) {
+                popUpTo(Routes.Login.route) {
+                    inclusive = true
+                }
+            }
+        }
+        is AuthRes.Error -> {
+            analytics.logError("Error SignIn Incognito: ${result.errorMessage}")
+            Toast.makeText(context, result.errorMessage, Toast.LENGTH_SHORT).show()
+        }
+    }
+}
 
 @Composable
-fun SocialMediaButton(onClick: () -> Unit, text: String, icon: Int, color: Color, ) {
-    var click by remember { mutableStateOf(false) }
+fun SocialMediaButton(onClick: () -> Unit, text: String, icon: Int, color: Color) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.padding(start = 40.dp, end = 40.dp).clickable { click = !click },
+        modifier = Modifier.padding(start = 40.dp, end = 40.dp),
         shape = RoundedCornerShape(50),
         border = BorderStroke(width = 1.dp, color = if(icon == R.drawable.ic_incognito) color else Color.Gray),
         color = color
@@ -178,8 +220,7 @@ fun SocialMediaButton(onClick: () -> Unit, text: String, icon: Int, color: Color
                 tint = Color.Unspecified
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(text = "$text", color = if(icon == R.drawable.ic_incognito) Color.White else Color.Black)
-            click = true
+            Text(text = text, color = if(icon == R.drawable.ic_incognito) Color.White else Color.Black)
         }
     }
 }

@@ -57,17 +57,23 @@ import com.franlop.android_firebase.ui.navigation.Routes
 import com.franlop.android_firebase.ui.screens.login.ContactsScreen
 import com.franlop.android_firebase.ui.screens.login.NotesScreen
 import com.franlop.android_firebase.utils.AnalyticsManager
+import com.franlop.android_firebase.utils.AuthManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(analytics: AnalyticsManager, navigation: NavController) {
+fun HomeScreen(analytics: AnalyticsManager, auth: AuthManager, navigation: NavController) {
     analytics.logScreenView(screenName = Routes.Home.route)
     val navController = rememberNavController()
 
     var showDialog by remember { mutableStateOf(false) }
 
     val onLogoutConfirmed: () -> Unit = {
-
+        auth.signOut()
+        navigation.navigate(Routes.Login.route) {
+            popUpTo(Routes.Home.route) {
+                inclusive = true
+            }
+        }
     }
 
     Scaffold (
