@@ -1,4 +1,4 @@
-package com.franlop.android_firebase.ui.screens.login
+package com.franlop.android_firebase.ui.screens.db
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 
 @Composable
-fun ContactsScreen() {
+fun NotesScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -20,7 +20,7 @@ fun ContactsScreen() {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "Contactos",
+            text = "Notas",
             fontWeight = FontWeight.Bold,
             fontSize = MaterialTheme.typography.titleLarge.fontSize,
             color = Color.White
